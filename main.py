@@ -58,6 +58,8 @@ class SpaceInvadersGame(arcade.Window):
         self.elapsed_time = 0.0
         self.next_player_shot_time = 0.0
         self.save_file_path = Path(__file__).parent / "savegame.json"
+        self.status_message = ""
+        self.status_message_time_left = 0.0
 
         self.shoot_sound = None
         self.explosion_sound = None
@@ -185,13 +187,19 @@ class SpaceInvadersGame(arcade.Window):
 
         with self.save_file_path.open("w", encoding="utf-8") as save_file:
             json.dump(state_data, save_file, indent=2)
+        self._set_status_message("Game Saved", 2.0)
 
     def _load_game(self):
         if not self.save_file_path.exists():
+            self._set_status_message("No Save File Found", 2.0)
             return
 
-        with self.save_file_path.open("r", encoding="utf-8") as save_file:
-            state_data = json.load(save_file)
+        try:
+            with self.save_file_path.open("r", encoding="utf-8") as save_file:
+                state_data = json.load(save_file)
+        except (json.JSONDecodeError, OSError, ValueError):
+            self._set_status_message("Load Failed", 2.0)
+            return
 
         self.state = state_data.get("state", STATE_PLAYING)
         self.score = int(state_data.get("score", 0))
@@ -233,6 +241,11 @@ class SpaceInvadersGame(arcade.Window):
             self.enemy_bullets.append(bullet)
 
         self._start_background_music()
+        self._set_status_message("Game Loaded", 2.0)
+
+    def _set_status_message(self, message, duration):
+        self.status_message = message
+        self.status_message_time_left = duration
 
     def on_draw(self):
         self.clear()
@@ -241,6 +254,8 @@ class SpaceInvadersGame(arcade.Window):
             arcade.draw_text("SPACE INVADERS", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 60, arcade.color.AERO_BLUE, 44, anchor_x="center")
             arcade.draw_text("Arrow Keys: Move   Space: Shoot", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, arcade.color.WHITE, 20, anchor_x="center")
             arcade.draw_text("Press ENTER to Start", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 50, arcade.color.YELLOW, 24, anchor_x="center")
+            if self.status_message_time_left > 0:
+                arcade.draw_text(self.status_message, SCREEN_WIDTH / 2, 46, arcade.color.LIGHT_GREEN, 18, anchor_x="center")
             return
 
         arcade.draw_sprite(self.player)
@@ -251,6 +266,9 @@ class SpaceInvadersGame(arcade.Window):
         arcade.draw_text(f"Score: {self.score}", 18, SCREEN_HEIGHT - 36, arcade.color.WHITE, 18)
         arcade.draw_text(f"Lives: {self.lives}", 200, SCREEN_HEIGHT - 36, arcade.color.WHITE, 18)
         arcade.draw_text(f"Level: {self.level}", 340, SCREEN_HEIGHT - 36, arcade.color.WHITE, 18)
+
+        if self.status_message_time_left > 0:
+            arcade.draw_text(self.status_message, SCREEN_WIDTH / 2, 46, arcade.color.LIGHT_GREEN, 18, anchor_x="center")
 
         if self.state == STATE_GAME_OVER:
             arcade.draw_lbwh_rectangle_filled(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (0, 0, 0, 130))
@@ -392,9 +410,13 @@ class SpaceInvadersGame(arcade.Window):
 
     def on_update(self, delta_time):
         if self.state != STATE_PLAYING:
+            if self.status_message_time_left > 0:
+                self.status_message_time_left = max(0.0, self.status_message_time_left - delta_time)
             return
 
         self.elapsed_time += delta_time
+        if self.status_message_time_left > 0:
+            self.status_message_time_left = max(0.0, self.status_message_time_left - delta_time)
         self._update_player(delta_time)
         self._update_bullets(delta_time)
         self._update_enemies(delta_time)

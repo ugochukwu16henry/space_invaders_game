@@ -10,6 +10,15 @@ I will add my demonstration link after recording a 4-5 minute walkthrough showin
 
 [Software Demo Video](http://youtube.link.goes.here)
 
+## Controls
+
+- Left Arrow: Move left
+- Right Arrow: Move right
+- Space: Shoot
+- Enter: Start game / Restart
+- F5: Save game
+- F9: Load saved game
+
 # Development Environment
 
 I developed this project in Visual Studio Code on Windows using a Python virtual environment for dependency isolation.
