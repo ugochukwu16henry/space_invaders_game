@@ -54,6 +54,7 @@ class SpaceInvadersGame(arcade.Window):
         self.enemy_direction = 1
         self.enemy_speed = BASE_ENEMY_SPEED
         self.enemy_shot_chance_per_second = 0.18
+        self.elapsed_time = 0.0
         self.next_player_shot_time = 0.0
 
         self.shoot_sound = None
@@ -64,6 +65,7 @@ class SpaceInvadersGame(arcade.Window):
         self._load_sounds()
 
         self._setup_level()
+        self._start_background_music()
 
     def _load_images(self):
         local_images = Path(__file__).parent / "images"
@@ -121,7 +123,7 @@ class SpaceInvadersGame(arcade.Window):
 
     def _start_background_music(self):
         if self.background_music and self.background_music_player is None:
-            self.background_music_player = arcade.play_sound(self.background_music, volume=0.35, looping=True)
+            self.background_music_player = arcade.play_sound(self.background_music, volume=0.6, loop=True)
 
     def _setup_level(self):
         self.player_bullets = arcade.SpriteList()
@@ -194,9 +196,9 @@ class SpaceInvadersGame(arcade.Window):
         elif key == arcade.key.RIGHT:
             self.right_pressed = True
         elif key == arcade.key.SPACE and self.state == STATE_PLAYING:
-            if self.time >= self.next_player_shot_time:
+            if self.elapsed_time >= self.next_player_shot_time:
                 self._shoot_player_bullet()
-                self.next_player_shot_time = self.time + SHOT_COOLDOWN
+                self.next_player_shot_time = self.elapsed_time + SHOT_COOLDOWN
         elif key == arcade.key.ENTER and self.state in {STATE_START, STATE_GAME_OVER}:
             self._restart_game()
 
@@ -211,6 +213,7 @@ class SpaceInvadersGame(arcade.Window):
         self.score = 0
         self.level = 1
         self.lives = STARTING_LIVES
+        self.elapsed_time = 0.0
         self.next_player_shot_time = 0.0
         self._setup_level()
         self._start_background_music()
@@ -232,8 +235,11 @@ class SpaceInvadersGame(arcade.Window):
             self.player.center_x = SCREEN_WIDTH - half_width
 
     def _update_bullets(self, delta_time):
-        self.player_bullets.update()
-        self.enemy_bullets.update()
+        for bullet in self.player_bullets:
+            bullet.center_y += bullet.change_y * delta_time
+
+        for bullet in self.enemy_bullets:
+            bullet.center_y += bullet.change_y * delta_time
 
         for bullet in list(self.player_bullets):
             if bullet.bottom > SCREEN_HEIGHT:
@@ -301,6 +307,7 @@ class SpaceInvadersGame(arcade.Window):
         if self.state != STATE_PLAYING:
             return
 
+        self.elapsed_time += delta_time
         self._update_player(delta_time)
         self._update_bullets(delta_time)
         self._update_enemies(delta_time)
