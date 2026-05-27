@@ -36,10 +36,10 @@ START_SCREEN_CONTROLS = [
 
 START_SCREEN_RULES = [
     "Destroy every enemy ship to clear the wave.",
-    "Each enemy hit gives 10 points times your current level.",
-    "Enemies get faster and larger in number every level.",
+    "Each enemy hit gives 10 points\ntimes your current level.",
+    "Enemies get faster and appear\nin larger groups every level.",
     "You lose a life when an enemy shot hits your ship.",
-    "The game ends if your lives reach zero or enemies reach your ship.",
+    "The game ends if your lives reach zero\nor enemies reach your ship.",
 ]
 
 
@@ -263,13 +263,15 @@ class SpaceInvadersGame(arcade.Window):
         self.status_message = message
         self.status_message_time_left = duration
 
-    def _draw_instruction_panel(self, heading, items, left, top, accent_color):
+    def _draw_instruction_panel(self, heading, items, left, top, accent_color, width):
         arcade.draw_text(heading, left, top, accent_color, 21, bold=True)
 
         line_y = top - 34
         for item in items:
-            arcade.draw_text(item, left, line_y, arcade.color.WHITE, 15)
-            line_y -= 28
+            display_text = f"- {item}"
+            arcade.draw_text(display_text, left, line_y, arcade.color.WHITE, 15, width=width, multiline=True)
+            line_count = display_text.count("\n") + 1
+            line_y -= (line_count * 24) + 10
 
     def on_draw(self):
         self.clear()
@@ -277,10 +279,10 @@ class SpaceInvadersGame(arcade.Window):
         if self.state == STATE_START:
             arcade.draw_text("SPACE INVADERS", SCREEN_WIDTH / 2, SCREEN_HEIGHT - 90, arcade.color.AERO_BLUE, 44, anchor_x="center")
             arcade.draw_text("Defend your ship and survive every wave.", SCREEN_WIDTH / 2, SCREEN_HEIGHT - 136, arcade.color.WHITE, 18, anchor_x="center")
-            arcade.draw_lbwh_rectangle_filled(70, 120, SCREEN_WIDTH - 140, 340, (12, 22, 44, 185))
-            arcade.draw_lbwh_rectangle_outline(70, 120, SCREEN_WIDTH - 140, 340, arcade.color.AERO_BLUE, 3)
-            self._draw_instruction_panel("Controls", START_SCREEN_CONTROLS, 110, 420, arcade.color.YELLOW)
-            self._draw_instruction_panel("Rules", START_SCREEN_RULES, 450, 420, arcade.color.LIGHT_GREEN)
+            arcade.draw_lbwh_rectangle_filled(70, 80, SCREEN_WIDTH - 140, 310, (12, 22, 44, 185))
+            arcade.draw_lbwh_rectangle_outline(70, 80, SCREEN_WIDTH - 140, 310, arcade.color.AERO_BLUE, 3)
+            self._draw_instruction_panel("Controls", START_SCREEN_CONTROLS, 105, 360, arcade.color.YELLOW, 250)
+            self._draw_instruction_panel("Rules", START_SCREEN_RULES, 475, 360, arcade.color.LIGHT_GREEN, 260)
             arcade.draw_text("Press ENTER to Start", SCREEN_WIDTH / 2, 78, arcade.color.YELLOW, 24, anchor_x="center")
             if self.status_message_time_left > 0:
                 arcade.draw_text(self.status_message, SCREEN_WIDTH / 2, 42, arcade.color.LIGHT_GREEN, 18, anchor_x="center")

@@ -1,45 +1,92 @@
-Overview
+# Space Invaders Game
 
-This project was built to strengthen my practical software engineering skills by designing, implementing, testing, and iterating on a complete game loop in Python. My goal was to improve at real-time input handling, collision systems, asset integration, and debugging interactive applications.
+This project is a Space Invaders-style arcade game built with Python and the Arcade library. You control a ship at the bottom of the screen, shoot enemy waves, protect your remaining lives, and advance through harder levels as the game speeds up.
 
-I created a Space Invaders-style arcade game where the player controls a ship at the bottom of the screen and fights descending enemy waves. The player moves with the arrow keys, fires with the space bar, and progresses through increasingly difficult levels as enemy count and speed scale up. The game includes score tracking, lives, level progression, sound effects, background music, a start screen, and a game over screen.
+## What To Install
 
-My purpose for writing this software was to gain hands-on experience building a small but complete interactive system from scratch. I wanted to practice structuring game code into update loops and helper methods, handling edge cases across different library versions, and integrating media assets while keeping reliable gameplay behavior.
+You need the following before starting the game:
 
-I will add my demonstration link after recording a 4-5 minute walkthrough showing gameplay and key code sections.
+- Python 3.10 or newer
+- The Python package listed in `requirements.txt`
 
-[Software Demo Video](http://youtube.link.goes.here)
+Install the dependency with:
 
-## Controls
+```bash
+pip install -r requirements.txt
+```
+
+The current required package is:
+
+- `arcade>=2.6.17`
+
+If you want isolated dependencies, create and activate a virtual environment first.
+
+## How To Start The Game
+
+From the project folder, run:
+
+```bash
+python main.py
+```
+
+If you are using a virtual environment, activate it before running the command.
+
+## How To Play
+
+Your goal is to destroy all enemies before they reach your ship or remove all of your lives.
+
+### Controls
 
 - Left Arrow: Move left
 - Right Arrow: Move right
-- Space: Shoot
-- Enter: Start game / Restart
-- F5: Save game
-- F9: Load saved game
+- Space: Fire a shot
+- Enter: Start the game or restart after game over
+- F5: Save the current game
+- F9: Load the saved game
 
-# Development Environment
+### Rules
 
-I developed this project in Visual Studio Code on Windows using a Python virtual environment for dependency isolation.
+- Destroy every enemy ship to clear the current wave.
+- Each enemy you destroy adds points to your score.
+- New levels add more enemies and increase difficulty.
+- You lose a life when an enemy bullet hits your ship.
+- The game ends when your lives reach zero.
+- The game also ends if the enemy formation reaches your ship.
+
+## Project Overview
+
+This project was built to strengthen practical software engineering skills through real-time input handling, collision systems, asset integration, save/load support, and interactive game-loop design.
+
+Features included in the current version:
+
+- Start screen with controls and rules
+- Player movement and shooting
+- Enemy wave spawning and level progression
+- Score and lives tracking
+- Save and load support
+- Sound effects and background music
+- Game over screen
+
+## Development Environment
+
+This project was developed in Visual Studio Code on Windows using Python and a virtual environment.
 
 Tools and technologies used:
+
 - Visual Studio Code
 - Python 3
-- Arcade library (2D game framework)
-- Pyglet (used by Arcade for rendering/audio)
-- Git and GitHub for version control
+- Arcade
+- Pyglet
+- Git and GitHub
 
-# Useful Websites
+## Useful Websites
 
-The following resources were helpful while building and troubleshooting the game:
-* [Arcade Documentation](https://api.arcade.academy/en/latest/)
-* [Python Official Documentation](https://docs.python.org/3/)
-* [Pyglet Documentation](https://pyglet.readthedocs.io/en/latest/)
+- [Arcade Documentation](https://api.arcade.academy/en/latest/)
+- [Python Official Documentation](https://docs.python.org/3/)
+- [Pyglet Documentation](https://pyglet.readthedocs.io/en/latest/)
 
-# Future Work
+## Future Work
 
-Planned improvements for future versions:
-* Add animated sprites and explosion effects for more visual feedback.
-* Replace draw_text calls with cached Text objects for better performance.
-* Add power-ups, enemy variety, and a persistent high-score system.
+- Add animated sprites and explosion effects.
+- Replace repeated `draw_text` calls with cached `Text` objects.
+- Add power-ups, enemy variety, and a persistent high-score system.
