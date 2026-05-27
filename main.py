@@ -31,7 +31,11 @@ class SpaceInvadersGame(arcade.Window):
         super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE, update_rate=1 / 120)
         arcade.set_background_color(arcade.color.BLACK)
 
-        self.player = arcade.SpriteSolidColor(54, 28, arcade.color.AERO_BLUE)
+        self.player_image_path = None
+        self.enemy_image_path = None
+        self._load_images()
+
+        self.player = self._create_player_sprite()
         self.player.center_x = SCREEN_WIDTH / 2
         self.player.center_y = 55
 
@@ -55,28 +59,69 @@ class SpaceInvadersGame(arcade.Window):
         self.shoot_sound = None
         self.explosion_sound = None
         self.game_over_sound = None
+        self.background_music = None
+        self.background_music_player = None
         self._load_sounds()
 
         self._setup_level()
+
+    def _load_images(self):
+        local_images = Path(__file__).parent / "images"
+        player_image = local_images / "images.jpg"
+        enemy_image = local_images / "images (1).jpg"
+
+        self.player_image_path = str(player_image) if player_image.exists() else None
+        self.enemy_image_path = str(enemy_image) if enemy_image.exists() else None
+
+    def _create_player_sprite(self):
+        if self.player_image_path:
+            try:
+                player = arcade.Sprite(self.player_image_path)
+                player.width = 54
+                player.height = 28
+                return player
+            except Exception:
+                pass
+
+        return arcade.SpriteSolidColor(54, 28, arcade.color.AERO_BLUE)
+
+    def _create_enemy_sprite(self):
+        if self.enemy_image_path:
+            try:
+                enemy = arcade.Sprite(self.enemy_image_path)
+                enemy.width = 40
+                enemy.height = 26
+                return enemy
+            except Exception:
+                pass
+
+        return arcade.SpriteSolidColor(40, 26, arcade.color.BRIGHT_GREEN)
 
     def _load_sounds(self):
         local_sounds = Path(__file__).parent / "sounds"
         local_shoot = local_sounds / "shoot.wav"
         local_explode = local_sounds / "explode.wav"
         local_game_over = local_sounds / "game_over.wav"
+        local_background_music = local_sounds / "Lunar_Flight_game.mp3"
 
         try:
             self.shoot_sound = arcade.load_sound(str(local_shoot)) if local_shoot.exists() else arcade.load_sound(":resources:sounds/laser1.wav")
             self.explosion_sound = arcade.load_sound(str(local_explode)) if local_explode.exists() else arcade.load_sound(":resources:sounds/explosion1.wav")
             self.game_over_sound = arcade.load_sound(str(local_game_over)) if local_game_over.exists() else arcade.load_sound(":resources:sounds/gameover3.wav")
+            self.background_music = arcade.load_sound(str(local_background_music)) if local_background_music.exists() else None
         except Exception:
             self.shoot_sound = None
             self.explosion_sound = None
             self.game_over_sound = None
+            self.background_music = None
 
     def _play_sound(self, sound):
         if sound:
             arcade.play_sound(sound)
+
+    def _start_background_music(self):
+        if self.background_music and self.background_music_player is None:
+            self.background_music_player = arcade.play_sound(self.background_music, volume=0.35, looping=True)
 
     def _setup_level(self):
         self.player_bullets = arcade.SpriteList()
@@ -93,7 +138,7 @@ class SpaceInvadersGame(arcade.Window):
 
         for row in range(rows):
             for col in range(cols):
-                enemy = arcade.SpriteSolidColor(40, 26, arcade.color.BRIGHT_GREEN)
+                enemy = self._create_enemy_sprite()
                 enemy.center_x = start_x + col * ENEMY_HORIZONTAL_PADDING
                 enemy.center_y = start_y - row * ENEMY_VERTICAL_PADDING
 
@@ -113,7 +158,7 @@ class SpaceInvadersGame(arcade.Window):
             arcade.draw_text("Press ENTER to Start", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 50, arcade.color.YELLOW, 24, anchor_x="center")
             return
 
-        self.player.draw()
+        arcade.draw_sprite(self.player)
         self.player_bullets.draw()
         self.enemy_bullets.draw()
         self.enemies.draw()
@@ -123,7 +168,7 @@ class SpaceInvadersGame(arcade.Window):
         arcade.draw_text(f"Level: {self.level}", 340, SCREEN_HEIGHT - 36, arcade.color.WHITE, 18)
 
         if self.state == STATE_GAME_OVER:
-            arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, arcade.Texture.create_filled("overlay", (1, 1), (0, 0, 0, 130)))
+            arcade.draw_lbwh_rectangle_filled(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (0, 0, 0, 130))
             arcade.draw_text("GAME OVER", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 45, arcade.color.RED, 52, anchor_x="center")
             arcade.draw_text(f"Final Score: {self.score}", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 6, arcade.color.WHITE, 24, anchor_x="center")
             arcade.draw_text("Press ENTER to Restart", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 54, arcade.color.YELLOW, 22, anchor_x="center")
@@ -168,6 +213,13 @@ class SpaceInvadersGame(arcade.Window):
         self.lives = STARTING_LIVES
         self.next_player_shot_time = 0.0
         self._setup_level()
+        self._start_background_music()
+
+    def on_close(self):
+        if self.background_music_player:
+            self.background_music_player.pause()
+            self.background_music_player = None
+        super().on_close()
 
     def _update_player(self, delta_time):
         move_dir = (1 if self.right_pressed else 0) - (1 if self.left_pressed else 0)
