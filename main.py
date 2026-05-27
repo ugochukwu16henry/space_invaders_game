@@ -1,4 +1,5 @@
 import random
+import json
 from pathlib import Path
 
 import arcade
@@ -56,6 +57,7 @@ class SpaceInvadersGame(arcade.Window):
         self.enemy_shot_chance_per_second = 0.18
         self.elapsed_time = 0.0
         self.next_player_shot_time = 0.0
+        self.save_file_path = Path(__file__).parent / "savegame.json"
 
         self.shoot_sound = None
         self.explosion_sound = None
@@ -132,8 +134,7 @@ class SpaceInvadersGame(arcade.Window):
 
         rows = BASE_ENEMY_ROWS + (self.level - 1)
         cols = BASE_ENEMY_COLUMNS + min(5, self.level - 1)
-        self.enemy_speed = BASE_ENEMY_SPEED + (self.level - 1) * 12
-        self.enemy_shot_chance_per_second = 0.18 + (self.level - 1) * 0.06
+        self._apply_level_difficulty()
 
         start_x = ENEMY_HORIZONTAL_PADDING
         start_y = SCREEN_HEIGHT - ENEMY_TOP_OFFSET
@@ -150,6 +151,88 @@ class SpaceInvadersGame(arcade.Window):
         self.enemy_direction = 1
         self.player.center_x = SCREEN_WIDTH / 2
         self.player.center_y = 55
+
+    def _apply_level_difficulty(self):
+        self.enemy_speed = BASE_ENEMY_SPEED + (self.level - 1) * 12
+        self.enemy_shot_chance_per_second = 0.18 + (self.level - 1) * 0.06
+
+    def _save_game(self):
+        state_data = {
+            "state": self.state,
+            "score": self.score,
+            "level": self.level,
+            "lives": self.lives,
+            "player": {
+                "x": self.player.center_x,
+                "y": self.player.center_y,
+            },
+            "enemy_direction": self.enemy_direction,
+            "elapsed_time": self.elapsed_time,
+            "next_player_shot_time": self.next_player_shot_time,
+            "enemies": [
+                {"x": enemy.center_x, "y": enemy.center_y}
+                for enemy in self.enemies
+            ],
+            "player_bullets": [
+                {"x": bullet.center_x, "y": bullet.center_y, "vy": bullet.change_y}
+                for bullet in self.player_bullets
+            ],
+            "enemy_bullets": [
+                {"x": bullet.center_x, "y": bullet.center_y, "vy": bullet.change_y}
+                for bullet in self.enemy_bullets
+            ],
+        }
+
+        with self.save_file_path.open("w", encoding="utf-8") as save_file:
+            json.dump(state_data, save_file, indent=2)
+
+    def _load_game(self):
+        if not self.save_file_path.exists():
+            return
+
+        with self.save_file_path.open("r", encoding="utf-8") as save_file:
+            state_data = json.load(save_file)
+
+        self.state = state_data.get("state", STATE_PLAYING)
+        self.score = int(state_data.get("score", 0))
+        self.level = max(1, int(state_data.get("level", 1)))
+        self.lives = max(0, int(state_data.get("lives", STARTING_LIVES)))
+
+        player_data = state_data.get("player", {})
+        self.player.center_x = float(player_data.get("x", SCREEN_WIDTH / 2))
+        self.player.center_y = float(player_data.get("y", 55))
+
+        self.enemy_direction = int(state_data.get("enemy_direction", 1))
+        self.enemy_direction = 1 if self.enemy_direction >= 0 else -1
+        self.elapsed_time = float(state_data.get("elapsed_time", 0.0))
+        self.next_player_shot_time = float(state_data.get("next_player_shot_time", 0.0))
+
+        self._apply_level_difficulty()
+
+        self.enemies = arcade.SpriteList()
+        for enemy_data in state_data.get("enemies", []):
+            enemy = self._create_enemy_sprite()
+            enemy.center_x = float(enemy_data.get("x", 0.0))
+            enemy.center_y = float(enemy_data.get("y", 0.0))
+            self.enemies.append(enemy)
+
+        self.player_bullets = arcade.SpriteList()
+        for bullet_data in state_data.get("player_bullets", []):
+            bullet = arcade.SpriteSolidColor(6, 18, arcade.color.YELLOW)
+            bullet.center_x = float(bullet_data.get("x", 0.0))
+            bullet.center_y = float(bullet_data.get("y", 0.0))
+            bullet.change_y = float(bullet_data.get("vy", PLAYER_SHOT_SPEED))
+            self.player_bullets.append(bullet)
+
+        self.enemy_bullets = arcade.SpriteList()
+        for bullet_data in state_data.get("enemy_bullets", []):
+            bullet = arcade.SpriteSolidColor(6, 16, arcade.color.ORANGE_RED)
+            bullet.center_x = float(bullet_data.get("x", 0.0))
+            bullet.center_y = float(bullet_data.get("y", 0.0))
+            bullet.change_y = float(bullet_data.get("vy", -ENEMY_SHOT_SPEED))
+            self.enemy_bullets.append(bullet)
+
+        self._start_background_music()
 
     def on_draw(self):
         self.clear()
@@ -195,6 +278,10 @@ class SpaceInvadersGame(arcade.Window):
             self.left_pressed = True
         elif key == arcade.key.RIGHT:
             self.right_pressed = True
+        elif key == arcade.key.F5:
+            self._save_game()
+        elif key == arcade.key.F9:
+            self._load_game()
         elif key == arcade.key.SPACE and self.state == STATE_PLAYING:
             if self.elapsed_time >= self.next_player_shot_time:
                 self._shoot_player_bullet()
